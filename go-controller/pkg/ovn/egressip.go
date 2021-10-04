@@ -1295,3 +1295,11 @@ func getEgressIPKey(eIP *egressipv1.EgressIP) string {
 func getPodKey(pod *kapi.Pod) string {
 	return fmt.Sprintf("%s_%s", pod.Namespace, pod.Name)
 }
+
+func getEgressIPAllocationTotalCount(allocator map[string]*egressNode) float64 {
+	count := 0
+	for _, eNode := range allocator {
+		count += len(eNode.allocations)
+	}
+	return float64(count)
+}
