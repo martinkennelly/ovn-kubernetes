@@ -453,10 +453,16 @@ func NewControlPlaneRecorder(sbClient client.Client) *ControlPlaneRecorder {
 	recorder := ControlPlaneRecorder{sync.Mutex{}, make(map[kapimtypes.UID]*record)}
 	sbClient.Cache().AddEventHandler(&cache.EventHandlerFuncs{
 		AddFunc: func(table string, model model.Model) {
-			go recorder.AddPortBindingEvent(table, model)
+			if table != portBindingTable {
+				return
+			}
+			go recorder.AddPortBindingEvent(model)
 		},
 		UpdateFunc: func(table string, old model.Model, new model.Model) {
-			go recorder.UpdatePortBindingEvent(table, old, new)
+			if table != portBindingTable {
+				return
+			}
+			go recorder.UpdatePortBindingEvent(old, new)
 		},
 		DeleteFunc: func(table string, model model.Model) {
 		},
@@ -494,10 +500,7 @@ func (ps *ControlPlaneRecorder) AddLSPEvent(podUID kapimtypes.UID) {
 	r.timestampType = logicalSwitchPort
 }
 
-func (ps *ControlPlaneRecorder) AddPortBindingEvent(table string, m model.Model) {
-	if table != portBindingTable {
-		return
-	}
+func (ps *ControlPlaneRecorder) AddPortBindingEvent(m model.Model) {
 	var r *record
 	now := time.Now()
 	row := m.(*sbdb.PortBinding)
@@ -520,10 +523,7 @@ func (ps *ControlPlaneRecorder) AddPortBindingEvent(table string, m model.Model)
 	r.timestampType = portBinding
 }
 
-func (ps *ControlPlaneRecorder) UpdatePortBindingEvent(table string, old, new model.Model) {
-	if table != portBindingTable {
-		return
-	}
+func (ps *ControlPlaneRecorder) UpdatePortBindingEvent(old, new model.Model) {
 	var r *record
 	oldRow := old.(*sbdb.PortBinding)
 	newRow := new.(*sbdb.PortBinding)
